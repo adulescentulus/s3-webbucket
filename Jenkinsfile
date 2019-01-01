@@ -24,7 +24,7 @@ pipeline {
                 AWS_ACCESS_KEY_ID = credentials('AWS_KEY_IMGRESIZE_ID')
                 AWS_SECRET_ACCESS_KEY = credentials('AWS_KEY_IMGRESIZE_KEY')
                 STACK_NAME = 'BNC-staging'
-                WEBBUCKET_NAME = env.BNC_HUGO_STAGING_NAME
+                WEBBUCKET_NAME = "${env.BNC_HUGO_STAGING_NAME}"
             }
             steps {
                 sh '''
