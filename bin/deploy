@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -o errexit
+
+if [ -z "$STACK_NAME" ]; then
+    echo variable \"STACK_NAME\" must not be empty!
+    exit 1
+fi
+if [ -z "$WEBBUCKET_NAME" ]; then
+    echo variable \"WEBBUCKET_NAME\" must not be empty!
+    exit 1
+fi
+
+bucket_name="nc-blog-webbucket-tmp"
+
+set -o xtrace
+
+aws s3 mb "s3://${bucket_name}"
+
+aws cloudformation package \
+  --output-template-file=deploy/output.yaml \
+  --template-file=s3-webbucket.yaml \
+  --s3-bucket="${bucket_name}" \
+  --s3-prefix="${STACK_NAME}"
+
+aws cloudformation deploy \
+  --template-file=deploy/output.yaml \
+  --stack-name="${STACK_NAME}" \
+  --capabilities=CAPABILITY_NAMED_IAM \
+  --parameter-overrides WebBucketName=$WEBBUCKET_NAME
+
+aws s3 rb --force "s3://${bucket_name}"
+
+aws cloudformation describe-stacks \
+  --stack-name "${STACK_NAME}" \
+  --query Stacks[].Outputs \
+  --output table

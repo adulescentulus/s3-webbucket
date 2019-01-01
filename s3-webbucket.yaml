@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  WebBucketName:
+    Default: webbucket.networkchallenge.de
+    Type: String
+    MinLength: 1
+
+Resources:
+  WebBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref WebBucketName
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+  WebBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebBucket
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Principal: "*"
+            Resource: !Sub arn:aws:s3:::${WebBucket}/*
+  S3UploadPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowUserToSeeBucketListInTheConsole
+            Action:
+              - 's3:ListAllMyBuckets'
+            Effect: Allow
+            Resource: '*'
+          - Sid: AllowUserAllS3Actions
+            Action: 's3:*'
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${WebBucket}
+              - !Sub arn:aws:s3:::${WebBucket}/*
+      PolicyName: WebBucketUpload
+      Users:
+        - !Ref UserBucketUpload
+  UserBucketUpload:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: cfn-generic-bucket-uploader
+Outputs:
+  BucketWebsiteUrl:
+    Value: !GetAtt WebBucket.WebsiteURL
+  Bucket:
+    Value: !Ref WebBucket
